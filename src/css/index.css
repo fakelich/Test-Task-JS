@@ -1,0 +1,35 @@
+html {
+  box-sizing: border-box;
+}
+th{
+  cursor: pointer;
+}
+*,
+*::after,
+*::before {
+  box-sizing: inherit;
+}
+#customers{
+  height: 200px;
+}
+.num {
+  display: none;
+}
+.paginator{
+  padding: 15px;
+}
+
+.paginatorActive{
+  font-weight: bold;
+}
+.paginator span{
+  padding: 3px 9px;
+  margin-left: 3px;
+  background-color: #eee;
+  border: 1px solid #aaa;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.paginator span:hover{
+  background-color: #ccc;
+}
