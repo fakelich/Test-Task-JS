@@ -1,3 +1,5 @@
+// ==== INPUT DATA ====
+
 var tableInfo = [
     {
       name: 'Thor Walton',
@@ -89,16 +91,27 @@ var tableInfo = [
     },
   ];
 
-// ========================================================== DRAWING ==============================================================
+// ==== DRAWING FUNCTION ====
 
-//Creating an elements
+function drawRows(arr) {
+    for (var i = tbody.children.length-1; i >= 0; i--) {
+        tbody.children[i].remove();
+    }
+    for (var i = 0; i < arr.length; i++) {
+        arr[i].setAttribute('data-range',i+1);
+        tbody.appendChild(arr[i]);
+    }
+    pagination(event);
+}
+
+// ==== FIRST DRAWING ====
+
 var table = document.createElement('table');
-table.className = 'table table-sm sort';
+table.className = 'table table-sm table-hover';
 var thead = document.createElement('thead');
 thead.className = 'thead-light';
 var tr = thead.insertRow(0);
-
-// Filling a cells
+tr.setAttribute('id','theadCustomers');
 
 for (var i = 0; i < tableInfo.length; i++) {
     var row = table.insertRow(i);
@@ -112,60 +125,66 @@ for (var i = 0; i < tableInfo.length; i++) {
     }
 }
 
-// Creating a thead
+var tbody = table.getElementsByTagName('tbody')[0];
+var rowsArray = [].slice.call(tbody.rows);
 
 var th = '';
 var title;
 for (var key in tableInfo[0]) {
     switch (key){
-        case 'name':
-        title = 'Name';
-        break;
-        case 'position':
-        title = 'Position';
-        break;
-        case 'office':
-        title = 'Office';
-        break;
-        case 'age':
-        title = 'Age';
-        break;
         case 'startDate':
-        title = 'Start Date';
-        break;
-        case 'salary':
-        title = 'Salary';
-        break;
-    }
-    if (key == 'startDate') {
-        th = th+'<th data-type=\'date\'>'+title+'</th>';
-    } else{
-    th = th+'<th data-type=\''+typeof tableInfo[0][key]+'\'>'+title+'</th>';
+            title = 'Start Date';
+            th += '<th data-type=\'date\'>'+title+'</th>';
+            break;
+        default:
+            title = key[0].toUpperCase()+key.slice(1);
+            th += '<th data-type=\''+typeof tableInfo[0][key]+'\'>'+title+'</th>';
+            break;
     }
 }
 tr.innerHTML = th;
 
-// Publication
-
 document.getElementById('customers').appendChild(table);
 table.insertBefore(thead,table.children[0]);
 
-//============================================================ SORTING ============================================================
+// ==== SEARCH ====
 
-//Define function
-table.onclick = function(e) {
-    if (e.target.tagName != 'TH') return;
+var searchField = document.createElement("input");
+searchField.setAttribute("type","text");
+searchField.setAttribute("placeholder","Search by name...");
+searchField.setAttribute("id","searchField");
+searchField.className = "form-control";
+
+document.getElementById("search").appendChild(searchField);
+
+searchField.onkeyup = function () {
+  tableSearch();
+}
+
+function tableSearch() {
+  var request = new RegExp(searchField.value);
+  var searchResults = [];
+  for (var i = 0; i < rowsArray.length; i++) {
+    var check = rowsArray[i].children[0].innerHTML;
+    if(request.test(check)){
+      searchResults.push(rowsArray[i]);
+    }
+  }
+  drawRows(searchResults);
+}
+
+// ==== SORTING ====
+
+document.getElementById('theadCustomers').onclick = function(e) {
     sorter(e.target.cellIndex, e.target.getAttribute('data-type'));
 };
-//Creating an array of rows
-var tbody = table.getElementsByTagName('tbody')[0];
-var rowsArray = [].slice.call(tbody.rows);
-//Вызов счётчиков
-var c, c0 = 1, c1 = 1, c2 = 1, c3 = 1, c4 = 1, c5 = 1;
+
+var sortCounter, arrCounter = [0, 0, 0, 0, 0, 0];
 
 function sorter(numCol, type) {
     var compare;
-//Define kinds of compare
+    var rowsArray = [].slice.call(tbody.rows);
+    var sortResults = [];
     switch (type) {
         case 'number':
             compare = function(rowA, rowB) {
@@ -182,117 +201,89 @@ function sorter(numCol, type) {
                 return Date.parse(rowA.cells[numCol].innerHTML) - Date.parse(rowB.cells[numCol].innerHTML);
             }
     }
-    switch(numCol) {
-        case 0:
-        c0 += 1;
-        c = c0%2;
-        break;
-        case 1:
-        c1 += 1;
-        c = c1%2;
-        break;
-        case 2:
-        c2 += 1;
-        c = c2%2;
-        break;
-        case 3:
-        c3 += 1;
-        c = c3%2;
-        break;
-        case 4:
-        c4 += 1;
-        c = c4%2;
-        break;
-        case 5:
-        c5 += 1;
-        c = c5%2;
-        break;
+
+    for (var i = 0; i < 6; i++) {
+        switch (numCol) {
+            case i:
+                arrCounter[i] += 1;
+                sortCounter = arrCounter[i]%2;
+                break;
+        }
     }
+
     rowsArray.sort(compare);
-    if (c == 0){
+
+    if (sortCounter == 1){
       for (var i = 0; i < rowsArray.length; i++) {
-          rowsArray[i].setAttribute('data-range',i+1);
-          tbody.appendChild(rowsArray[i]);
+          sortResults.push(rowsArray[i]);
       }
     } else {
       for (var i = rowsArray.length-1; i > -1; i--) {
-        rowsArray[i].setAttribute('data-range',c);
-        tbody.appendChild(rowsArray[i]);
-        c++;
+        sortResults.push(rowsArray[i]);
       }
-      rowsArray = [].slice.call(tbody.rows);
     }
 
-    //For pagination updating
-    var nums = 1;
-    var dataPage = 0;
-    mainPage.classList.remove('paginatorActive');
-    mainPage = document.getElementById('page1');
-    mainPage.classList.add('paginatorActive');
-
-    var j = 0;
-    for (var i = 0; i < rowsArray.length; i++) {
-        var dataRange = rowsArray[i].dataset.range;
-        if (dataRange <= dataPage || dataRange >= dataPage)
-        rowsArray[i].style.display = 'none';
-
-    }
-    for (var i = dataPage; i < rowsArray.length; i++) {
-        if (j >= cnt) break;
-        rowsArray[i].style.display = 'table-row';
-        j++;
-    }
+    drawRows(sortResults);
 }
 
-//======================================================= PAGINATION ==============================================================
+// ==== PAGINATION ====
 
-//There is nothing to explain
-document.querySelector('.paginator').onclick = function(){
-    pagination();
+paginator.onclick = function(){
+  pagination();
 };
-var count = rowsArray.length;
+
+pagination(event)
+
+function pagination(event) {
+
+var paginator = document.getElementById('paginator');
+
+var count = tbody.children.length;
 var cnt = 5;
 var cnt_page = Math.ceil(count / cnt);
 
-var paginator = document.querySelector('.paginator');
 var page = '';
+
 for (var i = 0; i < cnt_page; i++) {
   page += '<span data-page=' + i * cnt + '  id=\'page' + (i + 1) + '\'>' + (i + 1) + '</span>';
 }
+
 paginator.innerHTML = page;
 
-for (var i = 0; i < rowsArray.length; i++) {
+for (var i = 0; i < count; i++) {
   if (i < cnt) {
-    rowsArray[i].style.display = 'table-row';
+    tbody.children[i].style.display = 'table-row';
   }
 }
 
 var mainPage = document.getElementById('page1');
 mainPage.classList.add('paginatorActive');
 
-function pagination(event) {
   var e = event || window.event;
   var target = e.target;
   var id = target.id;
+  var dataPage = +target.dataset.page;
+
+  if (target.tagName.toLowerCase() == 'ul') return;
   
-  if (target.tagName.toLowerCase() != 'span') return;
+  if (id[0] != 'p'){
+    id = 'page1';
+    dataPage = 0;
+  };
   
   var nums = id.substr(4);
-  var dataPage = +target.dataset.page;
   mainPage.classList.remove('paginatorActive');
   mainPage = document.getElementById(id);
   mainPage.classList.add('paginatorActive');
 
   var j = 0;
-  for (var i = 0; i < rowsArray.length; i++) {
-    var dataRange = rowsArray[i].dataset.range;
-    if (dataRange <= dataPage || dataRange >= dataPage)
-      rowsArray[i].style.display = 'none';
-
+  for (var i = 0; i < count; i++) {
+    if (!tbody.children[i]) break;
+    tbody.children[i].style.display = 'none';
   }
-  for (var i = dataPage; i < rowsArray.length; i++) {
+  for (var i = dataPage; i < count; i++) {
     if (j >= cnt) break;
-    rowsArray[i].style.display = 'table-row';
+    tbody.children[i].style.display = 'table-row';
     j++;
   }
 }
