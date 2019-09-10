@@ -1,0 +1,17 @@
+.table-wrapper, .table-container {
+    width: 100%;
+    height: 100%;
+}
+
+.table-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* place your styles here.*/
+
+.table-container {
+    flex-direction: column;
+    align-items: flex-start;
+}
